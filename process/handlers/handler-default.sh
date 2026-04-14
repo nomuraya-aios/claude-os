@@ -40,10 +40,27 @@ if ! command -v oh-dispatch &>/dev/null; then
   exit 20
 fi
 
-# oh-dispatch でIssueを処理（max-turns上限必須）
+# oh-dispatch でIssueを処理
+# バックグラウンド実行のためAnthropicAPI禁止（no-anthropic-api-background.md）
+# OpenRouter → Groq のフォールバックチェーンで実行
+OPENROUTER_KEY_FILE="${HOME}/.config/openrouter/moltbook-credentials.json"
+GROQ_KEY_FILE="${HOME}/.config/groq/credentials.json"
+
+if [[ -f "$OPENROUTER_KEY_FILE" ]]; then
+  OR_KEY=$(jq -r '.api_key // empty' "$OPENROUTER_KEY_FILE" 2>/dev/null)
+  BASE_URL_ARGS="--base-url https://openrouter.ai/api/v1 --api-key $OR_KEY"
+elif [[ -f "$GROQ_KEY_FILE" ]]; then
+  GROQ_KEY=$(jq -r '.api_key // empty' "$GROQ_KEY_FILE" 2>/dev/null)
+  BASE_URL_ARGS="--base-url https://api.groq.com/openai/v1 --api-key $GROQ_KEY"
+else
+  echo "OpenRouter/Groq の認証情報が見つかりません。スキップします。" >&2
+  exit 20
+fi
+
 oh-dispatch \
   --permission-mode full_auto \
   --max-turns "$MAX_TURNS" \
+  $BASE_URL_ARGS \
   -p "$(cat <<EOF
 以下のGitHub Issueを処理してください。
 
