@@ -144,6 +144,12 @@ check_already_running() {
 # --- タイムアウト中断処理 ---
 handle_timeout() {
   mlog "タイムアウト: $PROCESS_ID (${PROCESS_TIMEOUT}秒超過)"
+  # ハンドラのプロセスグループ全体をkill（孤児プロセス残留防止）
+  if [[ -n "${HANDLER_PGID:-}" ]]; then
+    kill -TERM -"$HANDLER_PGID" 2>/dev/null || true
+    sleep 2
+    kill -KILL -"$HANDLER_PGID" 2>/dev/null || true
+  fi
   table_update_status "$PROCESS_ID" "timeout" '{"exit_code": 124}'
   label_set "status:running" "status:timeout"
   issue_comment "⏰ タイムアウト (${PROCESS_TIMEOUT}秒超過)
@@ -156,6 +162,58 @@ bash process/process-runner.sh --repo $REPO --issue $ISSUE_NUMBER
 }
 
 trap handle_timeout ALRM
+
+# --- 起動時の残骸プロセスクリーンアップ ---
+# 前回のprocess-runnerが異常終了してrunningのまま残っているエントリを検出してreap
+cleanup_stale_processes() {
+  [[ ! -f "$PROCESS_TABLE" ]] && return 0
+
+  local now_epoch
+  now_epoch=$(date +%s)
+  local tmp="${PROCESS_TABLE}.tmp.$$"
+  local cleaned=0
+
+  (
+    flock -x 200
+    while IFS= read -r line; do
+      local status pid started_at timeout_val id
+      status=$(echo "$line" | jq -r '.status // ""')
+      pid=$(echo "$line" | jq -r '.pid // ""')
+      started_at=$(echo "$line" | jq -r '.started_at // ""')
+      timeout_val=$(echo "$line" | jq -r '.max_timeout // 600')
+      id=$(echo "$line" | jq -r '.id // ""')
+
+      if [[ "$status" == "running" ]]; then
+        # PIDが実際に生きているか確認
+        local pid_alive=0
+        [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null && pid_alive=1
+
+        # 開始時刻からtimeout_val秒以上経過しているか確認
+        local elapsed=0
+        if [[ -n "$started_at" ]]; then
+          local start_epoch
+          start_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$started_at" +%s 2>/dev/null \
+            || date -d "$started_at" +%s 2>/dev/null || echo "0")
+          elapsed=$(( now_epoch - start_epoch ))
+        fi
+
+        if [[ "$pid_alive" -eq 0 || "$elapsed" -gt "$timeout_val" ]]; then
+          mlog "残骸プロセス検出 → タイムアウト扱いでreap: $id (pid=$pid, elapsed=${elapsed}s)"
+          echo "$line" | jq -c \
+            --arg s "timeout" --arg t "$(TZ=UTC date '+%Y-%m-%dT%H:%M:%SZ')" \
+            '. + {status: $s, updated_at: $t, stale_cleanup: true}'
+          cleaned=$((cleaned + 1))
+          continue
+        fi
+      fi
+      echo "$line"
+    done < "$PROCESS_TABLE" > "$tmp"
+    mv "$tmp" "$PROCESS_TABLE"
+  ) 200>"${PROCESS_TABLE}.lock"
+
+  [[ "$cleaned" -gt 0 ]] && mlog "残骸クリーンアップ完了: ${cleaned}件"
+  return 0
+}
 
 # --- ハンドラ解決 ---
 # handler-{label}.sh または handler-default.sh を探す
@@ -224,6 +282,9 @@ bash process/process-runner.sh --repo $REPO --issue $ISSUE_NUMBER
 
 mlog "開始: $PROCESS_ID (timeout=${PROCESS_TIMEOUT}s, max-turns=${MAX_TURNS})"
 
+# 起動時に残骸プロセスをクリーンアップ
+cleanup_stale_processes
+
 check_already_processed
 check_already_running
 
@@ -267,16 +328,27 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   exit 10
 fi
 
-# running: タイムアウト付きでハンドラ実行
+# running: プロセスグループごとkillできるようsetsidで起動
 EXIT_CODE=0
-ERROR_LOG=""
-RESULT_SUMMARY=""
+HANDLER_PGID=""
 
 set +e
-OUTPUT=$(timeout "$PROCESS_TIMEOUT" bash "$HANDLER" \
+# setsid で新しいプロセスグループを作成し、PGIDを記録
+# タイムアウト時に PGID全体をkillして孫プロセスの残留を防ぐ
+OUTPUT=$(setsid bash "$HANDLER" \
   --repo "$REPO" \
   --issue "$ISSUE_NUMBER" \
-  --max-turns "$MAX_TURNS" 2>&1)
+  --max-turns "$MAX_TURNS" 2>&1 &
+HANDLER_PID=$!
+HANDLER_PGID=$(ps -o pgid= -p "$HANDLER_PID" 2>/dev/null | tr -d ' ' || echo "")
+# タイムアウト監視
+( sleep "$PROCESS_TIMEOUT" && kill -ALRM $$ 2>/dev/null ) &
+WATCHDOG_PID=$!
+wait "$HANDLER_PID"
+EXIT_CODE_INNER=$?
+kill "$WATCHDOG_PID" 2>/dev/null || true
+exit "$EXIT_CODE_INNER"
+)
 EXIT_CODE=$?
 set -e
 
