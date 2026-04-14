@@ -1,0 +1,106 @@
+#!/bin/bash
+# bin/aios
+#
+# 目的:
+#   claude-os のメインCLI。パッケージ管理・デプロイ・ヘルスチェックを
+#   統一インターフェースで提供する。依存なし・bash のみで動く。
+#
+# 使用方法:
+#   aios <subcommand> [options]
+
+set -euo pipefail
+
+# aios バイナリから claude-os ルートを解決
+# シンボリックリンク経由でも正しく解決する
+AIOS_BIN="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+AIOS_ROOT="$(cd "$(dirname "$AIOS_BIN")/.." && pwd)"
+
+VERSION="0.1.0"
+
+usage() {
+  cat <<EOF
+aios v${VERSION} — claude-os package manager
+
+使用方法:
+  aios <subcommand> [options]
+
+サブコマンド:
+  install <name>    パッケージをインストール
+  remove <name>     パッケージを削除
+  list [--installed] パッケージ一覧を表示
+  update            全パッケージを更新（git pull + 再インストール）
+  deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期
+  health            システムヘルスチェック
+  version           バージョン表示
+
+例:
+  aios install ocr
+  aios list --installed
+  aios health
+  aios deploy --dry-run
+
+EOF
+}
+
+# --- サブコマンド実装 ---
+
+cmd_install() {
+  local name="${1:-}"
+  if [[ -z "$name" ]]; then
+    echo "使用方法: aios install <name>" >&2
+    exit 1
+  fi
+  bash "$AIOS_ROOT/packages/packages-install.sh" "$name"
+}
+
+cmd_remove() {
+  local name="${1:-}"
+  if [[ -z "$name" ]]; then
+    echo "使用方法: aios remove <name>" >&2
+    exit 1
+  fi
+  bash "$AIOS_ROOT/packages/packages-remove.sh" "$name"
+}
+
+cmd_list() {
+  bash "$AIOS_ROOT/packages/packages-list.sh" "$@"
+}
+
+cmd_update() {
+  echo "[aios] git pull..."
+  git -C "$AIOS_ROOT" pull
+  echo "[aios] 更新完了"
+}
+
+cmd_deploy() {
+  bash "$AIOS_ROOT/deploy/sync.sh" "$@"
+}
+
+cmd_health() {
+  bash "$AIOS_ROOT/health/health-check.sh" "$@"
+}
+
+cmd_version() {
+  echo "aios v${VERSION}"
+  echo "AIOS_ROOT: $AIOS_ROOT"
+}
+
+# --- メインルーティング ---
+SUBCOMMAND="${1:-}"
+shift || true
+
+case "$SUBCOMMAND" in
+  install)  cmd_install "$@" ;;
+  remove)   cmd_remove "$@" ;;
+  list)     cmd_list "$@" ;;
+  update)   cmd_update "$@" ;;
+  deploy)   cmd_deploy "$@" ;;
+  health)   cmd_health "$@" ;;
+  version)  cmd_version ;;
+  --help|-h|help|"") usage ;;
+  *)
+    echo "不明なサブコマンド: $SUBCOMMAND" >&2
+    usage
+    exit 1
+    ;;
+esac

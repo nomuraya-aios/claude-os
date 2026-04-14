@@ -1,0 +1,18 @@
+# claude-os banned tools definition
+# これらのツールはスクリプト・hookで使用禁止
+banned:
+  - name: git-crypt
+    reason: "別端末の鍵違いでファイルが永久復号不能になる"
+    pattern: "git-crypt"
+
+  - name: rm-rf
+    reason: "git管理外ファイルが即座に永久消失する"
+    pattern: "rm -rf"
+
+  - name: anthropic-api-background
+    reason: "バックグラウンドジョブでトークン爆発が発生する"
+    pattern: "claude -p"
+
+  - name: llm-loop
+    reason: "LLMをループ内で繰り返し呼び出すとトークン爆発する"
+    pattern: "for.*claude"

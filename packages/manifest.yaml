@@ -1,0 +1,32 @@
+# claude-os packages manifest
+# name: パッケージ名（aios install <name> で指定する名前）
+# version: semver
+# description: 説明
+# install_dest: インストール先（~/.claude/skills/<name> 等）
+# source_dir: このリポジトリ内のソースディレクトリ（相対パス）
+# deps: 依存コマンド一覧
+
+packages:
+  - name: ocr
+    version: "1.0.0"
+    description: "NDLOCR-Lite を使った日本語OCRスキル"
+    install_dest: "~/.claude/skills/ocr"
+    source_dir: "packages/skills/ocr"
+    deps:
+      - ndlocr-lite
+      - uv
+
+  - name: article
+    version: "1.0.0"
+    description: "記事執筆スキル"
+    install_dest: "~/.claude/skills/article"
+    source_dir: "packages/skills/article"
+    deps: []
+
+  - name: github-issue
+    version: "1.0.0"
+    description: "GitHub Issue作成スキル"
+    install_dest: "~/.claude/skills/github-issue"
+    source_dir: "packages/skills/github-issue"
+    deps:
+      - gh
