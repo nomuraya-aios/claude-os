@@ -1,0 +1,15 @@
+# claude-os バジェット設定
+# LLM呼び出しのトークン上限。数値比較のみで判定（LLM不使用）
+
+# 1呼び出しあたりの上限（output tokens）
+per_call: 50000
+
+# 日次上限（output tokens）
+daily: 500000
+
+# 月次上限（output tokens）
+monthly: 5000000
+
+# ブレーカートリップ閾値
+# daily の何%でブレーカーを発動するか
+breaker_threshold_pct: 80
