@@ -322,6 +322,34 @@ fi
 
 mlog "ハンドラ: $HANDLER"
 
+# --- budget / breaker チェック（ハンドラ実行前）---
+BREAKER_CHECK="$AIOS_ROOT/breaker/breaker-check.sh"
+BUDGET_CHECK="$AIOS_ROOT/budget/budget-check.sh"
+
+if [[ -f "$BREAKER_CHECK" ]]; then
+  if ! bash "$BREAKER_CHECK" 2>&1; then
+    mlog "サーキットブレーカーOPEN: $PROCESS_ID — 実行をブロック"
+    table_update_status "$PROCESS_ID" "failed" '{"exit_code": 2, "reason": "breaker_open"}'
+    label_set "status:running" "status:failed"
+    issue_comment "🔴 サーキットブレーカーがOPENのため実行をブロックしました。
+
+\`breaker-reset.sh\` でリセット後に再実行してください。"
+    exit 2
+  fi
+fi
+
+if [[ -f "$BUDGET_CHECK" ]]; then
+  if ! bash "$BUDGET_CHECK" --tokens "${EXPECTED_TOKENS:-5000}" --type "issue-handler" 2>&1; then
+    mlog "budget上限超過: $PROCESS_ID — 実行をブロック"
+    table_update_status "$PROCESS_ID" "failed" '{"exit_code": 1, "reason": "budget_exceeded"}'
+    label_set "status:running" "status:failed"
+    issue_comment "🔴 budget上限超過のため実行をブロックしました。
+
+明日以降またはbudget上限を引き上げてから再実行してください。"
+    exit 1
+  fi
+fi
+
 if [[ "$DRY_RUN" -eq 1 ]]; then
   mlog "[DRY-RUN] ハンドラ実行をスキップ"
   reap_success "ドライラン完了"
