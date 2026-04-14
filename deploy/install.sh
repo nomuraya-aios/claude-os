@@ -13,7 +13,7 @@ set -euo pipefail
 
 REPO="${CLAUDE_OS_REPO:-nomuraya-aios/claude-os}"
 BRANCH="${CLAUDE_OS_BRANCH:-main}"
-INSTALL_DIR="${CLAUDE_OS_INSTALL_DIR:-$HOME/workspace-ai/nomuraya-aios/claude-os}"
+INSTALL_DIR="${CLAUDE_OS_INSTALL_DIR:-$HOME/.local/share/claude-os/repo}"
 BIN_DIR="${HOME}/.local/bin"
 
 mlog() { echo "[install] $*"; }
@@ -74,6 +74,14 @@ LOG_DIR="${HOME}/.local/share/claude-os/logs"
 mkdir -p "$STATE_DIR" "$LOG_DIR"
 mlog "状態ディレクトリ作成: $STATE_DIR"
 
+# --- kernel を ~/.claude/ にマージ ---
+mlog "kernel ルール・hookを ~/.claude/ にマージ..."
+if bash "$INSTALL_DIR/deploy/sync.sh" 2>&1; then
+  mlog "OK: kernel マージ完了"
+else
+  mwarn "kernel マージをスキップしました（kernel/ が未整備の可能性）"
+fi
+
 # --- 完了 ---
 mlog ""
 mlog "インストール完了!"
@@ -83,3 +91,4 @@ mlog ""
 mlog "次のステップ:"
 mlog "  aios health    # ヘルスチェック"
 mlog "  aios list      # パッケージ一覧"
+mlog "  aios install <name>  # スキルをインストール"

@@ -16,12 +16,27 @@ packages:
       - ndlocr-lite
       - uv
 
-  - name: article
+  - name: pdf
     version: "1.0.0"
-    description: "記事執筆スキル"
-    install_dest: "~/.claude/skills/article"
-    source_dir: "packages/skills/article"
+    description: "PDFファイルの読み取り・要約"
+    install_dest: "~/.claude/skills/pdf"
+    source_dir: "packages/skills/pdf"
     deps: []
+
+  - name: tts
+    version: "1.0.0"
+    description: "テキスト音声読み上げ (macOS say コマンド使用)"
+    install_dest: "~/.claude/skills/tts"
+    source_dir: "packages/skills/tts"
+    deps: []
+
+  - name: transcribe-diarize
+    version: "1.0.0"
+    description: "音声文字起こし・話者分離"
+    install_dest: "~/.claude/skills/transcribe-diarize"
+    source_dir: "packages/skills/transcribe-diarize"
+    deps:
+      - uv
 
   - name: github-issue
     version: "1.0.0"
@@ -30,3 +45,32 @@ packages:
     source_dir: "packages/skills/github-issue"
     deps:
       - gh
+
+  - name: article
+    version: "1.0.0"
+    description: "記事執筆・ブログ投稿スキル"
+    install_dest: "~/.claude/skills/article"
+    source_dir: "packages/skills/article"
+    deps: []
+
+  - name: web-fetch
+    version: "1.0.0"
+    description: "URLのコンテンツ取得・要約"
+    install_dest: "~/.claude/skills/web-fetch"
+    source_dir: "packages/skills/web-fetch"
+    deps: []
+
+  - name: pptx
+    version: "1.0.0"
+    description: "PowerPointファイル作成"
+    install_dest: "~/.claude/skills/pptx"
+    source_dir: "packages/skills/pptx"
+    deps:
+      - uv
+
+  - name: use-knowledge
+    version: "1.0.0"
+    description: "保存済みナレッジを参照"
+    install_dest: "~/.claude/skills/use-knowledge"
+    source_dir: "packages/skills/use-knowledge"
+    deps: []
