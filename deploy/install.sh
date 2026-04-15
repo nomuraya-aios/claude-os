@@ -82,22 +82,26 @@ else
   mwarn "kernel マージをスキップしました（kernel/ が未整備の可能性）"
 fi
 
-# --- 全スキルをインストール ---
+# --- 全スキルをインストール（既存は保護）---
+# 既存スキルは上書きしない。ユーザーが独自に持っているスキルは尊重する。
 mlog ""
-mlog "スキルをインストール中..."
+mlog "スキルをインストール中（既存は保護）..."
 MANIFEST="$INSTALL_DIR/packages/manifest.yaml"
 INSTALLED_SKILLS=()
-SKIPPED_SKILLS=()
+PROTECTED_SKILLS=()
+FAILED_SKILLS=()
 
 if [[ -f "$MANIFEST" ]]; then
-  # manifest から name 一覧を取得
   SKILL_NAMES=$(grep -E '^  - name:' "$MANIFEST" | awk '{print $3}')
   for skill in $SKILL_NAMES; do
-    if bash "$INSTALL_DIR/packages/packages-install.sh" "$skill" 2>&1; then
+    OUTPUT=$(bash "$INSTALL_DIR/packages/packages-install.sh" "$skill" 2>&1)
+    EXIT_CODE=$?
+    if echo "$OUTPUT" | grep -q "スキップ（既存）"; then
+      PROTECTED_SKILLS+=("$skill")
+    elif [[ "$EXIT_CODE" -eq 0 ]]; then
       INSTALLED_SKILLS+=("$skill")
     else
-      SKIPPED_SKILLS+=("$skill")
-      mwarn "スキップ: $skill（依存ツール不足の可能性）"
+      FAILED_SKILLS+=("$skill")
     fi
   done
 else
@@ -114,26 +118,32 @@ mlog " インストール先: $INSTALL_DIR"
 mlog " CLI:           $BIN_DIR/aios"
 mlog ""
 
+get_trigger() {
+  local skill="$1"
+  awk "
+    /^  - name: ${skill}\$/ { found=1 }
+    found && /^    trigger:/ { gsub(/^    trigger: */, \"\"); gsub(/^\"|\"$/, \"\"); print; exit }
+    found && /^  - name:/ && !/^  - name: ${skill}\$/ { exit }
+  " "$MANIFEST" 2>/dev/null || echo ""
+}
+
 if [[ "${#INSTALLED_SKILLS[@]}" -gt 0 ]]; then
-  mlog " 使えるスキル:"
+  mlog " 新たに使えるスキル:"
   for skill in "${INSTALLED_SKILLS[@]}"; do
-    # manifest から trigger を取得して表示
-    trigger=$(awk "
-      /^  - name: ${skill}\$/ { found=1 }
-      found && /^    trigger:/ { gsub(/^    trigger: */, \"\"); gsub(/^\"|\"$/, \"\"); print; exit }
-      found && /^  - name:/ && !/^  - name: ${skill}\$/ { exit }
-    " "$MANIFEST" 2>/dev/null || echo "")
-    if [[ -n "$trigger" ]]; then
-      mlog "   • $trigger"
-    else
-      mlog "   • $skill"
-    fi
+    trigger=$(get_trigger "$skill")
+    [[ -n "$trigger" ]] && mlog "   • $trigger" || mlog "   • $skill"
   done
   mlog ""
 fi
 
-if [[ "${#SKIPPED_SKILLS[@]}" -gt 0 ]]; then
-  mlog " スキップ（依存ツール不足）: ${SKIPPED_SKILLS[*]}"
+if [[ "${#PROTECTED_SKILLS[@]}" -gt 0 ]]; then
+  mlog " 保護（既存を維持）: ${PROTECTED_SKILLS[*]}"
+  mlog " → 上書きするには: aios install <name> --force"
+  mlog ""
+fi
+
+if [[ "${#FAILED_SKILLS[@]}" -gt 0 ]]; then
+  mlog " スキップ（依存ツール不足）: ${FAILED_SKILLS[*]}"
   mlog " → 依存ツールを入れてから: aios install <name>"
   mlog ""
 fi
@@ -141,5 +151,5 @@ fi
 mlog " Claude Code を再起動するとスキルが有効になります"
 mlog ""
 mlog " その他のコマンド:"
-mlog "   aios health          # ヘルスチェック"
-mlog "   aios list --installed # インストール済みスキル一覧"
+mlog "   aios health           # ヘルスチェック"
+mlog "   aios list --installed  # インストール済みスキル一覧"
