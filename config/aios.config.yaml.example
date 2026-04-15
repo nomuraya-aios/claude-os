@@ -1,0 +1,8 @@
+# aios.config.yaml.example — nomuraya の設定例
+# cp config/aios.config.yaml.example config/aios.config.yaml で使う
+
+personal_repo: "~/.claude"  # nomuraya-operation/.claude が git 管理している実体
+
+personal_deploy:
+  enabled: true
+  backup: true

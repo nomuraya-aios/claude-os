@@ -30,6 +30,7 @@ aios v${VERSION} — claude-os package manager
   list [--installed] パッケージ一覧を表示
   update            全パッケージを更新（git pull + 再インストール）
   deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期
+  sync-personal [--dry-run]  personal リポジトリを ~/.claude/ にマージ
   health            システムヘルスチェック
   version           バージョン表示
 
@@ -76,6 +77,10 @@ cmd_deploy() {
   bash "$AIOS_ROOT/deploy/sync.sh" "$@"
 }
 
+cmd_sync_personal() {
+  bash "$AIOS_ROOT/deploy/sync-personal.sh" "$@"
+}
+
 cmd_health() {
   bash "$AIOS_ROOT/health/health-check.sh" "$@"
 }
@@ -94,8 +99,9 @@ case "$SUBCOMMAND" in
   remove)   cmd_remove "$@" ;;
   list)     cmd_list "$@" ;;
   update)   cmd_update "$@" ;;
-  deploy)   cmd_deploy "$@" ;;
-  health)   cmd_health "$@" ;;
+  deploy)         cmd_deploy "$@" ;;
+  sync-personal)  cmd_sync_personal "$@" ;;
+  health)         cmd_health "$@" ;;
   version)  cmd_version ;;
   --help|-h|help|"") usage ;;
   *)

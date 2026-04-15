@@ -1,0 +1,12 @@
+# personal 設定（personal_repo パスが含まれるため除外）
+config/aios.config.yaml
+
+# OS / エディタ
+.DS_Store
+*.swp
+*.swo
+
+# ランタイム状態（~/.local/share/claude-os/ に保存されるが念のため）
+state/
+logs/
+*.lock
