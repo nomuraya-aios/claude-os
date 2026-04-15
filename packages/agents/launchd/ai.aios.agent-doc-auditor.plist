@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.aios.agent-doc-auditor</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/nomuraya/workspace-ai/nomuraya-aios/claude-os/packages/agents/agent-doc-auditor.sh</string>
+    <string>/Users/nomuraya/workspace-ai/nomuraya-aios/claude-os</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Weekday</key>
+      <integer>1</integer>
+      <key>Hour</key>
+      <integer>6</integer>
+      <key>Minute</key>
+      <integer>0</integer>
+    </dict>
+  </array>
+
+  <key>StandardOutPath</key>
+  <string>/Users/nomuraya/workspace-ai/nomuraya-aios/claude-os/logs/agent-doc-auditor.stdout</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/nomuraya/workspace-ai/nomuraya-aios/claude-os/logs/agent-doc-auditor.stderr</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/nomuraya/workspace-ai/nomuraya-aios/claude-os</string>
+
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>

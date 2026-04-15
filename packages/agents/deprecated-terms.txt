@@ -1,0 +1,4 @@
+claude -p
+claude_p
+Groq優先
+Ollama（captcha優先）
