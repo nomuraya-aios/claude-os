@@ -25,12 +25,13 @@ aios v${VERSION} — claude-os package manager
   aios <subcommand> [options]
 
 サブコマンド:
-  install <name>    パッケージをインストール
+  install <name>    パッケージをインストール（既存はスキップ）
   remove <name>     パッケージを削除
   list [--installed] パッケージ一覧を表示
   update            全パッケージを更新（git pull + 再インストール）
   deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期
   sync-personal [--dry-run]  personal リポジトリを ~/.claude/ にマージ
+  uninstall [--all] [--dry-run]  claude-os をアンインストール
   health            システムヘルスチェック
   version           バージョン表示
 
@@ -81,6 +82,10 @@ cmd_sync_personal() {
   bash "$AIOS_ROOT/deploy/sync-personal.sh" "$@"
 }
 
+cmd_uninstall() {
+  bash "$AIOS_ROOT/deploy/uninstall.sh" "$@"
+}
+
 cmd_health() {
   bash "$AIOS_ROOT/health/health-check.sh" "$@"
 }
@@ -101,6 +106,7 @@ case "$SUBCOMMAND" in
   update)   cmd_update "$@" ;;
   deploy)         cmd_deploy "$@" ;;
   sync-personal)  cmd_sync_personal "$@" ;;
+  uninstall)      cmd_uninstall "$@" ;;
   health)         cmd_health "$@" ;;
   version)  cmd_version ;;
   --help|-h|help|"") usage ;;
