@@ -19,7 +19,7 @@ VERSION="0.1.0"
 
 usage() {
   cat <<EOF
-aios v${VERSION} — claude-os package manager
+aios v${VERSION} — leverageAI-OS package manager
 
 使用方法:
   aios <subcommand> [options]
@@ -31,7 +31,7 @@ aios v${VERSION} — claude-os package manager
   update            全パッケージを更新（git pull + 再インストール）
   deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期
   sync-personal [--dry-run]  personal リポジトリを ~/.claude/ にマージ
-  uninstall [--all] [--dry-run]  claude-os をアンインストール
+  uninstall [--all] [--dry-run]  leverageAI-OS をアンインストール
   health            システムヘルスチェック
   version           バージョン表示
 

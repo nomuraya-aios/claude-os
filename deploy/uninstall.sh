@@ -144,9 +144,11 @@ if [[ -f "$CLAUDE_MD" ]]; then
 
   # 論理削除: アンインストール記録を追記
   # ユーザーが書き換えた残存スキル記述を LLM が判断するための情報
-  SKILL_LIST=$(grep -E '^  - name:' "$MANIFEST" 2>/dev/null | awk '{print $3}' | tr '\n' ',' | sed 's/,$//' || echo "")
-  UNINSTALL_NOTE="<!-- leverageAI-OS uninstalled: ${UNINSTALL_TS} skills=[${SKILL_LIST}] -->
-<!-- 上記スキルはアンインストール済みです。このコメント以降にスキルの記述が残っている場合は手動で削除してください。 -->"
+  # スキル名は列挙しない（ユーザー独自の同名スキルと競合するため）
+  UNINSTALL_NOTE="<!-- leverageAI-OS uninstalled: ${UNINSTALL_TS} -->
+<!-- leverageAI-OS が管理していたスキル・ルール・hook を削除しました。 -->
+<!-- 同名のスキルをあなた自身が実装している場合はそちらが有効です。 -->
+<!-- leverageAI-OS 由来のトリガーが残っている場合のみ手動で削除してください。 -->"
 
   if [[ "$DRY_RUN" -eq 1 ]]; then
     mlog "  ADD (dry-run): アンインストール記録を CLAUDE.md に追記"

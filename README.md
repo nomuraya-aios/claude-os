@@ -1,4 +1,4 @@
-# claude-os
+# leverageAI-OS
 
 Claude Code 用 AI-OS。`~/.claude/` の設定（rules・hooks・skills）をパッケージとして管理・配布する基盤。
 
