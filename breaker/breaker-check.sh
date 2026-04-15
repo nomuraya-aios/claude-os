@@ -70,11 +70,15 @@ fi
 
 # 条件: daily上限のTHRESHOLD_PCT%超過
 if [[ -n "$DAILY_LIMIT" ]]; then
-  TODAY=$(TZ=UTC date '+%Y-%m-%d')
+  # JST基準で当日を判定（UTC+9）
+  TODAY=$(TZ=Asia/Tokyo date '+%Y-%m-%d')
   LOG_FILE="$LOG_DIR/llm-calls.jsonl"
   USED_TODAY=0
+  # type="session" は Claude Code 本体の消費で breaker の管轄外。
+  # バックグラウンド自動実行（job/hook/issue）のみをトリップ判定に使う。
   if [[ -f "$LOG_FILE" ]]; then
-    USED_TODAY=$(grep "\"ts\":\"${TODAY}" "$LOG_FILE" 2>/dev/null \
+    USED_TODAY=$( { grep "\"ts\":\"${TODAY}" "$LOG_FILE" 2>/dev/null || true; } \
+      | { grep -v '"type":"session"' || true; } \
       | jq -r '.output_tokens // 0' \
       | awk '{s+=$1} END{print s+0}')
   fi
