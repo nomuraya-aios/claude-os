@@ -115,25 +115,45 @@ else
 fi
 
 # --- CLAUDE.md のトリガー行 ---
+# 物理削除: マーカーコメント(<!-- claude-os-skill:xxx -->)が残っている行のみ自動削除
+# 論理削除: アンインストール記録を CLAUDE.md に追記し、LLM が残存行を判断できるようにする
+# ユーザーがトリガー行を書き換えてマーカーを除去した場合は物理削除できないが、
+# アンインストール記録を読んだ LLM がそのスキルを使わないよう判断できる
 mlog ""
 mlog "CLAUDE.md のトリガー行を削除..."
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
+UNINSTALL_TS=$(TZ=UTC date '+%Y-%m-%dT%H:%M:%SZ')
+
 if [[ -f "$CLAUDE_MD" ]]; then
+  # 物理削除: マーカーコメントが残っている行
   if grep -q "claude-os-skill:\|<!-- claude-os skills -->" "$CLAUDE_MD" 2>/dev/null; then
     if [[ "$DRY_RUN" -eq 1 ]]; then
-      mlog "  REMOVE (dry-run): claude-os トリガー行"
+      mlog "  REMOVE (dry-run): claude-os マーカー付きトリガー行"
       grep -n "claude-os-skill:\|<!-- claude-os skills -->" "$CLAUDE_MD" | while IFS= read -r line; do
         mlog "    $line"
       done
     else
-      # claude-os マーカー行とトリガー行をすべて削除
       sed -i '' '/<!-- claude-os skills -->/d' "$CLAUDE_MD"
       sed -i '' '/<!-- claude-os-skill:/d' "$CLAUDE_MD"
-      mlog "  REMOVED: claude-os トリガー行"
+      mlog "  REMOVED: claude-os マーカー付きトリガー行"
     fi
     REMOVED=$((REMOVED + 1))
   else
-    mlog "  SKIP (トリガー行なし)"
+    mlog "  SKIP (マーカー付きトリガー行なし)"
+  fi
+
+  # 論理削除: アンインストール記録を追記
+  # ユーザーが書き換えた残存スキル記述を LLM が判断するための情報
+  SKILL_LIST=$(grep -E '^  - name:' "$MANIFEST" 2>/dev/null | awk '{print $3}' | tr '\n' ',' | sed 's/,$//' || echo "")
+  UNINSTALL_NOTE="<!-- claude-os uninstalled: ${UNINSTALL_TS} skills=[${SKILL_LIST}] -->
+<!-- 上記スキルはアンインストール済みです。このコメント以降にスキルの記述が残っている場合は手動で削除してください。 -->"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    mlog "  ADD (dry-run): アンインストール記録を CLAUDE.md に追記"
+    mlog "    $UNINSTALL_NOTE"
+  else
+    printf "\n%s\n" "$UNINSTALL_NOTE" >> "$CLAUDE_MD"
+    mlog "  ADDED: アンインストール記録を CLAUDE.md に追記"
   fi
 else
   mlog "  SKIP (CLAUDE.md が見つかりません)"
