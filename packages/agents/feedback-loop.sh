@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 # feedback-loop.sh — フィードバック自己改善ループの統合エントリポイント
 #
 # なぜ必要か:
@@ -16,8 +17,6 @@
 #   bash feedback-loop.sh improve   — 改善PR生成（oh-dispatch 1回）
 #   bash feedback-loop.sh status    — 改善ループの状態確認
 #   bash feedback-loop.sh report    — 週次改善レポート
-
-set -euo pipefail
 
 FEEDBACK_FILE="$HOME/.claude/engineering-feedback/feedback.jsonl"
 IMPROVEMENT_AGENT="$HOME/workspace-ai/nomuraya-agent-openclaw/moltbook/scripts/agent-system-improver.sh"
