@@ -2,42 +2,41 @@
 # meter/meter-baseline-update.sh
 #
 # 目的:
-#   全セッションの cache_read 実測値から「新セッション開始時の基準値」を再計算して保存する。
+#   新規セッション起動直後の「初回 cache_read > 0」実測値を集計し、
+#   「新セッション開始時の固定コスト」基準値を再計算して保存する。
 #   月次 launchd から呼ばれる。LLM不使用。
 #
 # 出力: ~/.claude/state/new-session-baseline.json
 #   {"baseline": N, "median": N, "p25": N, "p75": N, "sample_count": N, "updated_at": "..."}
 #
 # 基準値の定義:
-#   cache_read 5M 未満のセッション（短い=新しいセッション相当）の中央値。
+#   各セッションの「初回 cache_read_input_tokens > 0」エントリの中央値。
+#   CLAUDE.md + ルールファイル群の読み込みが完了した直後の値 = 毎回確定で生じるコスト。
+#   agent セッション（CLAUDE.md を読まない）は除外済み。
 #   この値を fresh スキルが「新セッション起動コスト」として使う。
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT="$HOME/.claude/state/new-session-baseline.json"
-THRESHOLD=5000000  # 5M tokens 未満を「短いセッション」と見なす
 
 log() { echo "[$(TZ=Asia/Tokyo date '+%H:%M:%S')] $*" >&2; }
 
-log "baseline 再計算開始"
+log "baseline 再計算開始（meter-parse-first-turn.sh 使用）"
 
-# 全セッションをスキャンして cache_read を収集
-VALUES=$(bash "$SCRIPT_DIR/meter-parse-session.sh" --all 2>/dev/null | \
-  jq -r "select(.session_id | startswith(\"agent\") | not) | select(.cache_read < $THRESHOLD) | .cache_read" | \
-  sort -n)
+# 初回 cr 実測値から統計を取得
+STATS=$(bash "$SCRIPT_DIR/meter-parse-first-turn.sh" --stats 2>/dev/null || true)
 
-COUNT=$(echo "$VALUES" | grep -c '[0-9]' || echo 0)
+COUNT=$(echo "$STATS" | jq -r '.count // 0')
 
 if [[ "$COUNT" -lt 10 ]]; then
   log "サンプル数不足 ($COUNT 件) — baseline を更新しない"
   exit 0
 fi
 
-# 統計計算
-MEDIAN=$(echo "$VALUES" | awk '{a[NR]=$1} END {print a[int(NR/2)]}')
-P25=$(echo "$VALUES"   | awk '{a[NR]=$1} END {print a[int(NR*0.25)]}')
-P75=$(echo "$VALUES"   | awk '{a[NR]=$1} END {print a[int(NR*0.75)]}')
+MEDIAN=$(echo "$STATS" | jq -r '.median')
+P25=$(echo "$STATS"    | jq -r '.p25')
+P75=$(echo "$STATS"    | jq -r '.p75')
 UPDATED_AT=$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S+09:00')
 
 jq -n \
