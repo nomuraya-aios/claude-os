@@ -60,6 +60,15 @@ packages:
     trigger: "`article`: 記事/執筆/ブログ書いて"
     deps: []
 
+  - name: doc-review
+    version: "1.0.0"
+    description: "ドキュメント品質4軸チェック（判断可能・実装突合・更新トリガー・陳腐化検出）"
+    install_dest: "~/.claude/skills/doc-review"
+    source_dir: "packages/skills/doc-review"
+    trigger: "`doc-review`: ドキュメント4軸チェック/doc確認/ドキュメントレビュー"
+    deps:
+      - jq
+
   - name: web-fetch
     version: "1.0.0"
     description: "URLのコンテンツ取得・要約"
