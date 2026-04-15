@@ -4,6 +4,7 @@
 # manifest.yaml に定義されたパッケージを source_dir から install_dest へコピーし、
 # 依存コマンドの有無を検証する。これにより claude-os スキル・エージェント・モードを
 # 宣言的に管理でき、手動コピーによるミスを防ぐ。
+# インストール完了後、manifest.yaml の trigger フィールドを ~/.claude/CLAUDE.md へ自動注入する。
 
 set -euo pipefail
 
@@ -70,6 +71,51 @@ parse_deps() {
   ' "${MANIFEST}"
 }
 
+# manifest.yaml から trigger フィールドを取得する
+get_trigger() {
+  local name="$1"
+  awk "
+    /^  - name: ${name}\$/ { found=1 }
+    found && /^    trigger:/ { gsub(/^    trigger: */, \"\"); gsub(/^\"/,\"\"); gsub(/\"\$/,\"\"); print; exit }
+    found && /^  - name:/ && !/^  - name: ${name}/ { exit }
+  " "${MANIFEST}"
+}
+
+# CLAUDE.md へトリガー行を注入する
+# 既に同名スキルのエントリがあればスキップ（冪等）
+inject_trigger() {
+  local name="$1"
+  local trigger="$2"
+  local claude_md="${HOME}/.claude/CLAUDE.md"
+
+  # CLAUDE.md が存在しない場合はスキップ
+  if [[ ! -f "$claude_md" ]]; then
+    log_warn "CLAUDE.md が見つかりません。トリガー注入をスキップ: ${claude_md}"
+    return 0
+  fi
+
+  # 既に同じ name のトリガーが入っていればスキップ
+  if grep -q "claude-os-skill:${name}" "$claude_md" 2>/dev/null; then
+    log_info "trigger 既存スキップ: $name"
+    return 0
+  fi
+
+  # マーカーセクションが存在しなければ末尾に追加
+  local marker="<!-- claude-os skills -->"
+  if ! grep -q "${marker}" "$claude_md"; then
+    printf "\n%s\n" "${marker}" >> "$claude_md"
+  fi
+
+  # マーカーの後にトリガー行を追記
+  # 形式: <!-- claude-os-skill:name --> trigger_text
+  local inject_line="<!-- claude-os-skill:${name} --> ${trigger}"
+  # macOS sed で marker の後に行を挿入
+  sed -i '' "/${marker}/a\\
+${inject_line}" "$claude_md"
+
+  log_info "trigger 注入: $name -> $claude_md"
+}
+
 # パッケージが manifest に存在するか確認
 VERSION="$(parse_package "${PKG_NAME}" "version")"
 if [[ -z "${VERSION}" ]]; then
@@ -105,3 +151,7 @@ mkdir -p "$(dirname "${INSTALL_DEST}")"
 cp -r "${SOURCE_PATH}" "${INSTALL_DEST}"
 
 log_info "Installed: ${PKG_NAME} -> ${INSTALL_DEST}"
+
+# CLAUDE.md へのトリガー注入
+TRIGGER="$(get_trigger "${PKG_NAME}")"
+[[ -n "${TRIGGER}" ]] && inject_trigger "${PKG_NAME}" "${TRIGGER}"

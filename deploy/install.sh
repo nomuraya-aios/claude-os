@@ -82,13 +82,64 @@ else
   mwarn "kernel マージをスキップしました（kernel/ が未整備の可能性）"
 fi
 
-# --- 完了 ---
+# --- 全スキルをインストール ---
 mlog ""
-mlog "インストール完了!"
-mlog "  インストール先: $INSTALL_DIR"
-mlog "  CLI:           $BIN_DIR/aios"
+mlog "スキルをインストール中..."
+MANIFEST="$INSTALL_DIR/packages/manifest.yaml"
+INSTALLED_SKILLS=()
+SKIPPED_SKILLS=()
+
+if [[ -f "$MANIFEST" ]]; then
+  # manifest から name 一覧を取得
+  SKILL_NAMES=$(grep -E '^  - name:' "$MANIFEST" | awk '{print $3}')
+  for skill in $SKILL_NAMES; do
+    if bash "$INSTALL_DIR/packages/packages-install.sh" "$skill" 2>&1; then
+      INSTALLED_SKILLS+=("$skill")
+    else
+      SKIPPED_SKILLS+=("$skill")
+      mwarn "スキップ: $skill（依存ツール不足の可能性）"
+    fi
+  done
+else
+  mwarn "manifest.yaml が見つかりません — スキルインストールをスキップ"
+fi
+
+# --- 完了メッセージ ---
 mlog ""
-mlog "次のステップ:"
-mlog "  aios health    # ヘルスチェック"
-mlog "  aios list      # パッケージ一覧"
-mlog "  aios install <name>  # スキルをインストール"
+mlog "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+mlog " claude-os インストール完了!"
+mlog "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+mlog ""
+mlog " インストール先: $INSTALL_DIR"
+mlog " CLI:           $BIN_DIR/aios"
+mlog ""
+
+if [[ "${#INSTALLED_SKILLS[@]}" -gt 0 ]]; then
+  mlog " 使えるスキル:"
+  for skill in "${INSTALLED_SKILLS[@]}"; do
+    # manifest から trigger を取得して表示
+    trigger=$(awk "
+      /^  - name: ${skill}\$/ { found=1 }
+      found && /^    trigger:/ { gsub(/^    trigger: */, \"\"); gsub(/^\"|\"$/, \"\"); print; exit }
+      found && /^  - name:/ && !/^  - name: ${skill}\$/ { exit }
+    " "$MANIFEST" 2>/dev/null || echo "")
+    if [[ -n "$trigger" ]]; then
+      mlog "   • $trigger"
+    else
+      mlog "   • $skill"
+    fi
+  done
+  mlog ""
+fi
+
+if [[ "${#SKIPPED_SKILLS[@]}" -gt 0 ]]; then
+  mlog " スキップ（依存ツール不足）: ${SKIPPED_SKILLS[*]}"
+  mlog " → 依存ツールを入れてから: aios install <name>"
+  mlog ""
+fi
+
+mlog " Claude Code を再起動するとスキルが有効になります"
+mlog ""
+mlog " その他のコマンド:"
+mlog "   aios health          # ヘルスチェック"
+mlog "   aios list --installed # インストール済みスキル一覧"

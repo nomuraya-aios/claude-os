@@ -4,6 +4,7 @@
 # description: 説明
 # install_dest: インストール先（~/.claude/skills/<name> 等）
 # source_dir: このリポジトリ内のソースディレクトリ（相対パス）
+# trigger: CLAUDE.md に注入するスキルトリガー行
 # deps: 依存コマンド一覧
 
 packages:
@@ -12,6 +13,7 @@ packages:
     description: "NDLOCR-Lite を使った日本語OCRスキル"
     install_dest: "~/.claude/skills/ocr"
     source_dir: "packages/skills/ocr"
+    trigger: "`ocr`: OCR/文字認識/画像からテキスト/スキャン"
     deps:
       - ndlocr-lite
       - uv
@@ -21,6 +23,7 @@ packages:
     description: "PDFファイルの読み取り・要約"
     install_dest: "~/.claude/skills/pdf"
     source_dir: "packages/skills/pdf"
+    trigger: "`pdf`: PDF読んで/PDFを開いて"
     deps: []
 
   - name: tts
@@ -28,6 +31,7 @@ packages:
     description: "テキスト音声読み上げ (macOS say コマンド使用)"
     install_dest: "~/.claude/skills/tts"
     source_dir: "packages/skills/tts"
+    trigger: "`tts`: 音声読み上げ/TTS/読んで/しゃべって/speak"
     deps: []
 
   - name: transcribe-diarize
@@ -35,6 +39,7 @@ packages:
     description: "音声文字起こし・話者分離"
     install_dest: "~/.claude/skills/transcribe-diarize"
     source_dir: "packages/skills/transcribe-diarize"
+    trigger: "`transcribe-diarize`: 文字起こし/音声/ミーティング録音"
     deps:
       - uv
 
@@ -43,6 +48,7 @@ packages:
     description: "GitHub Issue作成スキル"
     install_dest: "~/.claude/skills/github-issue"
     source_dir: "packages/skills/github-issue"
+    trigger: "`github-issue`: Issue作成/Issueを作って"
     deps:
       - gh
 
@@ -51,6 +57,7 @@ packages:
     description: "記事執筆・ブログ投稿スキル"
     install_dest: "~/.claude/skills/article"
     source_dir: "packages/skills/article"
+    trigger: "`article`: 記事/執筆/ブログ書いて"
     deps: []
 
   - name: web-fetch
@@ -58,6 +65,7 @@ packages:
     description: "URLのコンテンツ取得・要約"
     install_dest: "~/.claude/skills/web-fetch"
     source_dir: "packages/skills/web-fetch"
+    trigger: "`web-fetch`: URL取得/URLを読んで"
     deps: []
 
   - name: pptx
@@ -65,6 +73,7 @@ packages:
     description: "PowerPointファイル作成"
     install_dest: "~/.claude/skills/pptx"
     source_dir: "packages/skills/pptx"
+    trigger: "`pptx`: PowerPoint/スライド作成"
     deps:
       - uv
 
@@ -73,4 +82,5 @@ packages:
     description: "保存済みナレッジを参照"
     install_dest: "~/.claude/skills/use-knowledge"
     source_dir: "packages/skills/use-knowledge"
+    trigger: "`use-knowledge`: ナレッジ参照/過去に調べた"
     deps: []
