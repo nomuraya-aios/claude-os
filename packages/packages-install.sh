@@ -110,20 +110,20 @@ inject_trigger() {
   fi
 
   # 既に同じ name のトリガーが入っていればスキップ
-  if grep -q "claude-os-skill:${name}" "$claude_md" 2>/dev/null; then
+  if grep -q "leverageAI-OS-skill:${name}" "$claude_md" 2>/dev/null; then
     log_info "trigger 既存スキップ: $name"
     return 0
   fi
 
   # マーカーセクションが存在しなければ末尾に追加
-  local marker="<!-- claude-os skills -->"
+  local marker="<!-- leverageAI-OS skills -->"
   if ! grep -q "${marker}" "$claude_md"; then
     printf "\n%s\n" "${marker}" >> "$claude_md"
   fi
 
   # マーカーの後にトリガー行を追記
-  # 形式: <!-- claude-os-skill:name --> trigger_text
-  local inject_line="<!-- claude-os-skill:${name} --> ${trigger}"
+  # 形式: <!-- leverageAI-OS-skill:name --> trigger_text
+  local inject_line="<!-- leverageAI-OS-skill:${name} --> ${trigger}"
   # macOS sed で marker の後に行を挿入
   sed -i '' "/${marker}/a\\
 ${inject_line}" "$claude_md"

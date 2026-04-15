@@ -115,7 +115,7 @@ else
 fi
 
 # --- CLAUDE.md のトリガー行 ---
-# 物理削除: マーカーコメント(<!-- claude-os-skill:xxx -->)が残っている行のみ自動削除
+# 物理削除: マーカーコメント(<!-- leverageAI-OS-skill:xxx -->)が残っている行のみ自動削除
 # 論理削除: アンインストール記録を CLAUDE.md に追記し、LLM が残存行を判断できるようにする
 # ユーザーがトリガー行を書き換えてマーカーを除去した場合は物理削除できないが、
 # アンインストール記録を読んだ LLM がそのスキルを使わないよう判断できる
@@ -126,15 +126,15 @@ UNINSTALL_TS=$(TZ=UTC date '+%Y-%m-%dT%H:%M:%SZ')
 
 if [[ -f "$CLAUDE_MD" ]]; then
   # 物理削除: マーカーコメントが残っている行
-  if grep -q "claude-os-skill:\|<!-- claude-os skills -->" "$CLAUDE_MD" 2>/dev/null; then
+  if grep -q "leverageAI-OS-skill:\|<!-- leverageAI-OS skills -->" "$CLAUDE_MD" 2>/dev/null; then
     if [[ "$DRY_RUN" -eq 1 ]]; then
       mlog "  REMOVE (dry-run): claude-os マーカー付きトリガー行"
-      grep -n "claude-os-skill:\|<!-- claude-os skills -->" "$CLAUDE_MD" | while IFS= read -r line; do
+      grep -n "leverageAI-OS-skill:\|<!-- leverageAI-OS skills -->" "$CLAUDE_MD" | while IFS= read -r line; do
         mlog "    $line"
       done
     else
-      sed -i '' '/<!-- claude-os skills -->/d' "$CLAUDE_MD"
-      sed -i '' '/<!-- claude-os-skill:/d' "$CLAUDE_MD"
+      sed -i '' '/<!-- leverageAI-OS skills -->/d' "$CLAUDE_MD"
+      sed -i '' '/<!-- leverageAI-OS-skill:/d' "$CLAUDE_MD"
       mlog "  REMOVED: claude-os マーカー付きトリガー行"
     fi
     REMOVED=$((REMOVED + 1))
@@ -145,7 +145,7 @@ if [[ -f "$CLAUDE_MD" ]]; then
   # 論理削除: アンインストール記録を追記
   # ユーザーが書き換えた残存スキル記述を LLM が判断するための情報
   SKILL_LIST=$(grep -E '^  - name:' "$MANIFEST" 2>/dev/null | awk '{print $3}' | tr '\n' ',' | sed 's/,$//' || echo "")
-  UNINSTALL_NOTE="<!-- claude-os uninstalled: ${UNINSTALL_TS} skills=[${SKILL_LIST}] -->
+  UNINSTALL_NOTE="<!-- leverageAI-OS uninstalled: ${UNINSTALL_TS} skills=[${SKILL_LIST}] -->
 <!-- 上記スキルはアンインストール済みです。このコメント以降にスキルの記述が残っている場合は手動で削除してください。 -->"
 
   if [[ "$DRY_RUN" -eq 1 ]]; then
