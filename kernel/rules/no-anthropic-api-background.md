@@ -1,40 +1,42 @@
----
-rule: no-anthropic-api-background
-type: hard-constraint
----
+## 自動実行パイプラインでの LLM 呼び出し禁止
 
-# バックグラウンドジョブでの Anthropic API 使用禁止
+バックグラウンドスクリプト・launchd ジョブ・Stop/SessionStart hook チェーンで **いかなるLLMプロバイダーも呼んではならない**。
 
-**Why:** バックグラウンドジョブで `claude -p`（Anthropic API）を使用すると、
-監視なしで想定外のトークン消費が発生する。
-LLMエージェントがループ状態になった場合、人間が気づかずに課金が膨らむ。
+**対象（全て禁止）:**
+- Anthropic API（claude -p）
+- OpenRouter（oh-dispatch）
+- Ollama API
+- その他 LLM API
 
-**Rule:** スクリプト・バックグラウンドジョブ・スケジューラジョブ（launchd, cron等）で
-LLMを呼び出す場合、Anthropic API（直接呼び出し・エージェントフレームワーク経由を問わず）を
-使ってはならない。
+**なぜ OpenRouter も禁止か（2026-04-16 発見）:**
+sync-update-system-prompt.sh が oh-dispatch を Stop hook チェーンから毎セッション呼び出し、
+pattern-frequency.md (599KB) を渡していた。Anthropic API ではないが **トークン爆発リスクは同じ**。
 
-## 許可された代替手段（優先順）
+**なぜ全自動パイプラインが対象か:**
+- Stop hook → aggregate-patterns.sh → sync-update-system-prompt.sh のように、
+  呼び出し元が LLM 不使用でもチェーン内の下流で LLM を呼ぶケースがある
+- launchd の plist に `improve` を登録して oh-dispatch が走る（2026-04-16 即撤回）
 
-1. **OpenRouter** — サードパーティプロキシ経由でモデルにアクセス
-2. **Groq** — 無料枠があり、バックグラウンド処理に適している
-3. その他のサードパーティプロバイダー — コスト上限設定が可能なもの
+**判定基準:**
+```
+Q: このスクリプトは人間の操作なしで実行されるか？
+  YES → LLM呼び出し禁止
+  NO（ユーザーが手動で実行）→ 許可
+```
 
-代替手段を選ぶ際は、**コスト上限（spending limit）が設定できる**プロバイダーを選択すること。
+**代替手段:**
+- セッション開始時の軽量チェック: top-patterns.md (1KB) を Read → AI が差分判定
+- 月次フルレビュー: /persona-review でユーザーが明示指示
+- 手動改善: `feedback-loop.sh improve` を対話的に実行
 
-## 適用範囲
+**例外（Claude CLI 必須）:**
+| ジョブ | ファイル | 理由 |
+|-------|---------|------|
+| 日報生成 | `~/.claude/adk-agents/daily-report-agent/report_generator.py` | Sonnet品質が必須 |
 
-- バックグラウンドで動作するスクリプト全般
-- スケジューラ（launchd, cron, systemd timer 等）から起動されるジョブ
-- LLMエージェントフレームワークを呼ぶコード（`--base-url` で代替プロバイダーに向けること）
+例外追加条件: 無料プロバイダーで品質不足を実測確認＋このファイルに登録
 
-## 適用外（インタラクティブセッション）
-
-ユーザーが手動で実行する対話的な Claude Code セッションは対象外。
-この制約はバックグラウンド自動化のみに適用する。
-
-## チェック方法
-
-スクリプトに LLM 呼び出しを追加するとき、以下を確認する:
-- `claude` コマンドを直接呼んでいないか
-- LLMエージェントフレームワークを base-url 指定なしで呼んでいないか
-- コスト上限が設定されたプロバイダーを使っているか
+**事故記録:**
+- 2026-04-11: claude -p によるトークン爆発事故（Anthropic API 直接呼び出し）
+- 2026-04-16: oh-dispatch 599KB 毎セッション呼び出し発見（sync-update-system-prompt.sh 廃止）
+- 2026-04-16: launchd に oh-dispatch improve 登録→即撤回（feedback-loop.sh → collect のみに変更）
