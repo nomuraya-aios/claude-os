@@ -29,7 +29,8 @@ aios v${VERSION} — leverageAI-OS package manager
   remove <name>     パッケージを削除
   list [--installed] パッケージ一覧を表示
   update            全パッケージを更新（git pull + 再インストール）
-  deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期
+  deploy [--dry-run] [--backup]  kernel を ~/.claude/ に同期（配布）
+  sync-to-kernel [--dry-run]  ~/.claude/ の実運用状態を kernel に反映（逆同期）
   sync-personal [--dry-run]  personal リポジトリを ~/.claude/ にマージ
   uninstall [--all] [--dry-run]  leverageAI-OS をアンインストール
   health            システムヘルスチェック
@@ -78,6 +79,10 @@ cmd_deploy() {
   bash "$AIOS_ROOT/deploy/sync.sh" "$@"
 }
 
+cmd_sync_to_kernel() {
+  bash "$AIOS_ROOT/deploy/sync-to-kernel.sh" "$@"
+}
+
 cmd_sync_personal() {
   bash "$AIOS_ROOT/deploy/sync-personal.sh" "$@"
 }
@@ -104,8 +109,9 @@ case "$SUBCOMMAND" in
   remove)   cmd_remove "$@" ;;
   list)     cmd_list "$@" ;;
   update)   cmd_update "$@" ;;
-  deploy)         cmd_deploy "$@" ;;
-  sync-personal)  cmd_sync_personal "$@" ;;
+  deploy)          cmd_deploy "$@" ;;
+  sync-to-kernel)  cmd_sync_to_kernel "$@" ;;
+  sync-personal)   cmd_sync_personal "$@" ;;
   uninstall)      cmd_uninstall "$@" ;;
   health)         cmd_health "$@" ;;
   version)  cmd_version ;;
