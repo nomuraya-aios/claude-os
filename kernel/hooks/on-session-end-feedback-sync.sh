@@ -27,7 +27,9 @@ fi
 SYNCED=0
 
 # 全プロジェクト memory の feedback_*.md を走査
-find "$HOME/.claude/projects" -name "feedback_*.md" -newer "$SYNC_MARKER" 2>/dev/null | while read -r file; do
+# パイプ→whileはサブシェルになりカウンタが親に反映されないため、
+# プロセス置換を使って親シェルで実行する
+while read -r file; do
     # frontmatter から type: feedback を確認
     if ! head -10 "$file" | grep -q "type: feedback"; then
         continue
@@ -65,14 +67,14 @@ find "$HOME/.claude/projects" -name "feedback_*.md" -newer "$SYNC_MARKER" 2>/dev
             >> "$FEEDBACK_FILE"
         SYNCED=$((SYNCED + 1))
     fi
-done
+done < <(find "$HOME/.claude/projects" -name "feedback_*.md" -newer "$SYNC_MARKER" 2>/dev/null)
 
 # 同期マーカー更新
 date +%s > "$SYNC_MARKER"
 
 # ログ（ブロックしない）
 if [[ "$SYNCED" -gt 0 ]]; then
-    echo "[feedback-sync] ${SYNCED}件のmemory feedbackをfeedback.jsonlに同期" \
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] [feedback-sync] ${SYNCED}件のmemory feedbackをfeedback.jsonlに同期" \
         >> "$HOME/.claude/state/feedback-sync.log"
 fi
 
