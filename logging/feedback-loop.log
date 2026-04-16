@@ -1,0 +1,10 @@
+[2026-04-16T21:00:04] [feedback-loop] 合計: 38件, 未処理: 16件
+[2026-04-16T21:00:04] [feedback-loop] カテゴリ別:
+[2026-04-16T21:00:04] [feedback-loop]   process: 15件
+[2026-04-16T21:00:04] [feedback-loop]   quality: 1件
+[2026-04-16T21:00:04] [feedback-loop] 最新の未処理フィードバック:
+  [2026-04-16T03:52:52Z] process: コード・コミットメッセージ・PRに特定の役職名を書かない（全プロジェクト共通）  コード・コメント・コミットメッセージ・PRタイトル/bodyに特定の役職（CEO/CTO/DX部長/ファウンダー/エン
+  [2026-04-16T04:10:00Z] process: ローカルCIでテスト・レビュー完了するまでupstreamにPRを出さない ローカル（origin: nomuraya-job-fde/slack2github）でCIテスト→結果確認→レビュー完了し
+  [2026-04-16T09:07:30Z] process: システムメッセージの「You are powered by Haiku」等のモデル記載は不正確なことがある。実際のモデルは ensure-sonnet-or-above.sh で JSONL から取得
+  [2026-04-16T09:29:59Z] process: upstream(subcallai/slack2github)のCIを手動トリガーしてテストしてはいけない。テストはorigin(テスト環境)で行う 本番環境（upstream: subcallai
+  [2026-04-16T09:48:08Z] process: /fresh 実行中にユーザーが「終わり」と言ったら即クローズ。スコープ外の自主実施禁止。  /fresh フロー中にスコープ外タスクを自主実施しない。  **Why:** 2026-04-16、/f
