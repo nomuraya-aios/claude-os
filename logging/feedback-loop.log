@@ -28,3 +28,14 @@
   [2026-04-17T22:25:13Z] process: Step 6で有効Issueを残したとき、なぜユーザー介入が必要かのコメントをIssueに追加せずに終了した。ユーザーに指摘されて初めてコメントを追記した。SKILL.md Step 6に必須コメント
   [2026-04-17T22:25:20Z] process: Step 6で有効Issueを残したとき、なぜユーザー介入が必要かのコメントをIssueに追加せずに終了した。ユーザーに指摘されて初めてコメントを追記した。自己評価ステップがなかったため、このフロー欠
   [2026-04-17T22:34:30Z] process: 今セッションで作成した classify-audience.sh の launchd 登録を、実装時に見落とした。/fresh の Step 7-A で気づいて対応したが、本来は作成時点で launc
+[2026-04-19T21:00:03] [feedback-loop] 合計: 164件, 未処理: 57件
+[2026-04-19T21:00:03] [feedback-loop] カテゴリ別:
+[2026-04-19T21:00:03] [feedback-loop]   process: 55件
+[2026-04-19T21:00:03] [feedback-loop]   quality: 1件
+[2026-04-19T21:00:03] [feedback-loop]   communication: 1件
+[2026-04-19T21:00:03] [feedback-loop] 最新の未処理フィードバック:
+  [2026-04-19T11:16:10Z] process: docs/REPOSITORY_REMOTE_POLICY.md を確認せずに git push の修正を実装し、upstream に誤った PR を出した。ユーザー指摘「ルールは確認できるか？」で初
+  [2026-04-19T11:16:12Z] process: upstream PRへの直接操作時に、リポジトリ状態（archived, visibility）を事前確認していなかった。PR作成に失敗してから archive に気づいた。事前にリポジトリ状態を確
+  [2026-04-19T11:16:33Z] process: upstream repoにorigin固有コミット（launchd, hooks, mtg-tasks等）が混入していた問題を事前検知できなかった。sync-from-upstream.sh の設計
+  [2026-04-19T11:16:53Z] communication: ユーザー指摘時に「現状を言い換えるだけ」の返答で済ませようとする癖。アーカイブ対象を誤認した際『整理させてください』と言って同じ誤った認識を再提示した。言い換えではなく git remote -v の
+  [2026-04-19T11:16:53Z] process: 漏洩事故の責任主体で「前セッションの AI が」と主語を濁した。AI は世代をまたいでも自分（AI）として責任を引き受けるべき。ユーザーから『漏洩を起こしたのはお前だ』と明示的に訂正された。責任所在を
