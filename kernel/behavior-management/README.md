@@ -8,11 +8,33 @@
 
 | ディレクトリ | 役割 |
 |---|---|
-| [spec/](spec/) | 振る舞い仕様の構造化記述テンプレート |
+| [spec/](spec/) | 振る舞い仕様（共通コア + ドメインプロファイル + テンプレート） |
 | [injection/](injection/) | セッションへの自動注入機構（UserPromptSubmit hook + キーワード） |
 | [measurement/](measurement/) | 振る舞いが機能しているかの定量測定スクリプトひな型 |
-| [enforcement/](enforcement/) | 振る舞い違反の物理的防止（Stop hook で出力検査） |
+| [enforcement/](enforcement/) | 振る舞い違反の物理的防止（Stop hook + 共通禁句リスト） |
 | [learning/](learning/) | 失敗から振る舞いを更新（memory + ADR + future_concerns） |
+
+## spec/ 構造（共通コア + プロファイル）
+
+```
+spec/
+├── core.md                    # 全ドメイン共通の振る舞い仕様（必読）
+├── template.md                # 新プロファイル作成用テンプレート
+└── profiles/                  # ドメイン別プロファイル
+    ├── README.md
+    ├── training-design.md     # 実証済（paiza/uluru）
+    ├── coding.md              # サンプル
+    ├── writing.md             # サンプル
+    └── ops.md                 # サンプル
+```
+
+各ドメインプロファイルは **core.md を前提として** 拡張点のみ記述する（重複削減）。
+
+## 適用評価
+
+新ドメインに本OSを適用するか判定するチェックリスト: [applicability-checklist.md](applicability-checklist.md)
+
+10項目チェックで Yes 7個以上なら 🟢 推奨。4個以下なら 🔴 別アプローチ検討。
 
 ## 新ドメインへの適用フロー
 
